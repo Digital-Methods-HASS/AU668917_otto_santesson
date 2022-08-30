@@ -1,0 +1,150 @@
+---
+title: "Day 2, workshop"
+author: "Otto Sejrskild Santesson"
+date: '2022-08-30'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# dir.create("data") # So this creates a new folder in the Rproject (the name within the function specifies the name of the new folder)
+# dir.create("figures") # We do the same, but just a new folder for our beautiful figures
+# dir.create("output")
+
+# Cmd + Shift + C to comment out multiple lines at the same time
+
+download.file("https://ndownloader.figshare.com/files/11492171","data/SAFI_clean.csv", mode = "wb") # We download the file that was specified by Adela
+```
+
+```{r}
+# Creating an object in R
+area_hectares = 1.0
+area_hectares * 2.47
+area_hectares = 2.5
+area_acres = area_hectares * 2.47
+area_hectares = 3.2 #area_acres will only update in expressed commands, meaning that you would have to update area_acres, then update the area_hectares definition, if you want to update it -- IT NEED STO BE DONE EXPLICITLY 
+
+
+area_hectares = 50 
+length = 2.5
+width = 3.2
+area = length*width
+length*width
+```
+```{r}
+# Functions
+sqrt(9) # Taking the square root of a number
+round(9.2222, digit = 3) 
+# ?round() - One way of looking at the documentation for the function
+# help(round) - And another way of doing the same thing
+# ??round() - two question marks will make R search more rigorously for the function (will start to find functions that have a similar name)
+```
+
+
+```{r}
+# Vectors
+# Basically a series of values
+
+hh_members = c(2,7,4,5) # Making a vector, that is numeric
+wall_type  = c("mudbrick","muddaub","sunbricks") # Making a vector that is character
+
+length(hh_members)
+length(wall_type)
+
+class(wall_type)
+
+str(hh_members) # Lists more information than just the class of the object
+
+hh_members  = c(3,1,hh_members,54,8,5)
+hh_members
+hh_members = c(hh_members,hh_members)
+str(hh_members)
+
+hh_members > 5 # Outputs a logical vector - boolean values that indicates whether the values within the vector are bigger than 5 or not
+
+```
+
+
+```{r}
+# Exercise
+# Data type coercion
+
+# Remember - in a vector, the variables need to be of the same class
+num_char = c(1,2,3,"a") # The vector turns the numeric values into strings
+class(num_char)
+num_char
+
+num_logical = c(1,2,3, FALSE) # The vector turns the boolean value into 0 (since FALSE = 0 & TRUE = 1)
+class(num_logical)
+num_logical
+
+char_logical = c("a","b","c",TRUE) # The vector turns "TRUE" into a string/of type class character
+char_logical
+class(char_logical)
+
+tricky =c(1,2,3,"4") # Turns all the numbers into strings - the string overrules the fact, that they're all numbers
+tricky 
+
+
+combined_logical = c(num_logical,char_logical)
+combined_logical 
+
+# Vector
+wall_type[3] # We get the third element of the specified vector
+wall_type[4] # We get "NA", since our vector is only 3 long
+wall_type[2:3] # We get the values from order 2 to 3 of the vector, including both
+hh_members[12:15] # Same as the above, just a different example
+hh_members[c(11,3,9,4)] # Choosing the elements, as you want them in the order that you prefer (see an example the line below)
+hh_members[c(11,3,9,4)] # Since we ordered the indices differently, the output order is dependent on the order of the indices specified 
+wall_type[3:1] # Again, we can influence the ordering of the output, so it differs from the ordering in the variable/vector
+
+sunbrick = wall_type[c(3,3,3,3,3,3,3,3)]
+hh_members[hh_members>5 & hh_members<50] # Defining some filters to what values should be selected from the vector. The "&" symbol is a condition, which means, that it has to meet both the conditions (AND)
+
+wall_type[wall_type == "sunbricks"] # You can also just choose specific values from the vector this way; by specifying exactly what the value should be
+
+# %in%
+
+wall_type %in% c("sunbricks","mudbrick") # Creating a logical vector - seeing whether the stuff on the right is in the vector (which is true for index 1 and 3, since that is sunbricks and mudbrick respectively)
+
+wall_type[wall_type %in% c("sunbricks","mudbrick")] # Choosing the stuff, that is sunbricks and mudbrick
+
+
+# Missing data 
+rooms = c(1,2,5,NA,5,3)
+mean(rooms) # We can't get the mean, since we're missing a value - R will not produce any output
+?mean # We can see from the documentation, that we can make the argument, that R should remove the NA's before the computation is carried out
+
+mean(rooms, na.rm = TRUE) # We now removed the 
+sum(rooms, na.rm = TRUE)
+
+
+max(wall_type) # You get the alphabetically highest string 
+walltype_check = c(wall_type,"zebra") # We want to check whether this is true or not 
+max(walltype_check) # It is - thank you, R, that is pretty cool
+
+# Eliminating missing values
+  # Three different ways of doing the same thing
+na.omit(rooms
+rooms[!is.na(rooms)]
+rooms[complete.cases(rooms)] 
+
+
+rooms = c()
+
+```
+
+
+
+```{r}
+# Tips box for handy Rstudio shortcuts !
+# 1. Cmd + Shift + C to comment out multiple lines at the same time
+# 2. Use the "TAB" button to autocomplete variables/functions
+# 3. You can't use a digit as the first character in a variable name - e.g. 9fisken wouldn't be accepted
+# 4. You can specify the arguments explicitly, and then the order doesn't matter - otherwise, you need to follow the order that is specified in the documentation of the function
+
+```
+
