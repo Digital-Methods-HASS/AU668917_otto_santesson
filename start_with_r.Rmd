@@ -1,0 +1,52 @@
+---
+title: "3:W35: Start with R - Homework for Cultural Data Science"
+output:
+  html_document:
+    df_print: paged
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# Just a bunch of packages, that I keep on adding to every time I run into a package that I need to use (not good code practice)
+
+pacman::p_load(utils,tidyverse, patchwork, ggplot2, lme4, stats, grid, ggpubr, ggrepel, graphics,effects,VCA, vroom, readbulk,stringi, gridExtra, MuMIn,dfoptim, reticulate, Rcpp,dplyr, pacman,lmerTest,boot, dagitty,rstan,rethinking,truncnorm)
+```
+
+
+## Exercise #1
+```{r}
+rooms <- c(1, 2, 4, 5, 1, 3, 1, NA, 3, 1, 3, 2, 1, NA, 1, 8, 3, 1, 4, NA, 1, 3, 1, 2, 1, 7, 1, 9, 3, NA)
+
+which(rooms>2) %>% # First, we take the which() command to find out the indices of which of the elements that are greater than 2. This will result in a new vector, with the indices of all of the aforementioned elements
+rooms[.] %>%  # We then use this vector of indices to get out the actual elements that are greater than 2 from the 'rooms' vector
+length() # Then we take the length of this vector, to see how many elements (that are greater than 2) there are.
+```
+We can conclude, that there are 12 elements in the rooms vector that are greater than 2.
+
+Now we go on with finding the sum of the elements found above:
+```{r}
+# We start out by just repeating the first few steps from above, and instead of using the length()-function, we utilize the sum()-function. This function takes all of the elements of the vector and sum them together:
+
+which(rooms>2) %>% 
+  rooms[.] %>% 
+  sum()
+```
+We find, that the sum of the elements greater than 2 in the 'rooms' vector is 55.
+
+## Exercise #2
+
+In order to determine which type/class the data is in the 'rooms' vector, we perform the following line of code:
+```{r}
+class(rooms) # Easy peasy lemon squeezy 
+```
+We can conclude, that the data of the 'rooms' vector are numeric (i.e. they're numbers)
+
+## Exercise #3
+See attached file/file uploaded to GitHub
+
+
+
