@@ -31,9 +31,9 @@ Now we go on with finding the sum of the elements found above:
 ```{r}
 # We start out by just repeating the first few steps from above, and instead of using the length()-function, we utilize the sum()-function. This function takes all of the elements of the vector and sum them together:
 
-which(rooms>2) %>% 
-  rooms[.] %>% 
-  sum()
+which(rooms>2) %>% # Doing the same as above
+  rooms[.] %>% # The period just denotes the things that comes from the pipe above
+  sum() # Taking the sum of it all
 ```
 We find, that the sum of the elements greater than 2 in the 'rooms' vector is 55.
 
@@ -46,7 +46,32 @@ class(rooms) # Easy peasy lemon squeezy
 We can conclude, that the data of the 'rooms' vector are numeric (i.e. they're numbers)
 
 ## Exercise #3
-See attached file/file uploaded to GitHub
+```{r}
+download.file("https://ndownloader.figshare.com/files/11492171","data/SAFI_clean.csv", mode = "wb")
+interviews = read_csv("data/SAFI_clean.csv")
+view(interviews)
+```
+Link to the photo on GitHub: https://github.com/Digital-Methods-HASS/AU668917_santesson_otto/blob/main/r_screenshot_environment.png
 
 
+## Exercise #4 
+```{r message = FALSE}
+# We start of by making the data frame ready for the required analysis
+kings = read_csv2("danish_monarchs.csv") %>%  # Loading in the group-made csv-file
+  as_tibble() %>% # Turning it into a tibble
+  select(1:7) %>% # Selecting the first seven rows, since the last to rows (8 & 9) are empty columns
+  mutate(reigned_years = end_reign-start_reign) %>% # Adding a column that specify the reigned years
+  mutate(reigned_days = (reigned_years %/% 4)*366 + (reigned_years - (reigned_years %/% 4))*365) %>% # Adding a column that specify the total reigned days (taking transition years into account, by making a rough estimate)
+  filter(!is.na(reigned_days)) # We omit Margrethe the Second, since she is still in her reign, and taking the period of her current reign wouldn't be representative. 
 
+
+# We're now ready to perform the analysis on the tibble/column of interest (reigned_days)
+paste("The mean of rule over time of the Danish monarchs is",round(mean(kings$reigned_days), 2),"days")
+paste("The median of rule over time of the Danish monarchs is",median(kings$reigned_days),"days")
+
+# To find the three monarchs who ruled the longest, we perform the following operations on the tibble:
+kings %>% arrange(desc(reigned_days)) %>% # Arranging the tibble with regards to who has greatest value in the 'reigned_days' column, from greatest to lowest
+  .[1:3,] %>% # Taking the top three rows (monarchs) - the period denotes the tibble coming from the preceding pipe
+  select(Monarch,reigned_days) # We end up by taking the two essential columns we need in order to answer our inquiry
+```
+We see, that Christian 4. had the longest rule of all the Danish Monarchs. Erik 7. af Pommern and Christian 9. share the second place, with equally long periods of rule (this is of course not accurate, but the best estimate that could be made with the limited data available)
