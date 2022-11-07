@@ -1,0 +1,87 @@
+---
+title: "Data visualizations of police killing data"
+author: "Otto Sejrskild Santesson"
+date: "7th of November 2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# Just a bunch of packages, that I keep on adding to every time I run into a package that I need to use (not good code practice, I know)
+
+pacman::p_load(utils,tidyverse, patchwork, ggplot2, lme4, stats, grid, ggpubr, ggrepel, graphics,effects,VCA, vroom, readbulk,stringi, gridExtra, MuMIn,dfoptim, reticulate, Rcpp,dplyr, pacman,lmerTest,boot, dagitty,rstan,rethinking, rvest, tidyr, stringr, janitor, statebins, httr,lubridate,ggridges)
+```
+
+
+#### We start of by performing the scraping in the same steps as provided in the markdown "scraping.Rmd" from the repository: https://github.com/Digital-Methods-HASS/WebscrapingPoliceKillings 
+```{r url}
+# Assigning the url to the website that we're going to scrape to an object in R
+url <- "http://web.archive.org/web/20200502072010/https://killedbypolice.net/kbp2020"
+
+# Scraping the website
+url_html = url %>% GET(., timeout(10)) %>% read_html # I had issues that the connection timeout was sat too low
+# since the website opens really, really slowly
+```
+
+#### We then define and use the function from the "scraping.Rmd" markdown, so we can automate the scraping process and get the data of the different years:
+```{r scrape function}
+scrape_police_kill <- function(website){
+	url <- website %>% GET(., timeout(10)) %>% read_html
+	annual_table <- url %>% 
+ 			html_nodes("table") %>%
+ 			html_table()  # result is a list
+  annual_table <- do.call(cbind,unlist(annual_table, recursive = FALSE))
+ }
+```
+
+#### Next up, we start looping over the different years, using the function that we defined in the chunk above
+```{r loop}
+mastertable=NULL  # Creating an empty object for the results
+
+for (year in 2013:2020){  # Creating a loop that iterate over the different years
+	print(year)
+	url <- "http://web.archive.org/web/20200502072010/https://killedbypolice.net/kbp"   # We define the URls to all end with "kbp", since the pattern of the URLs of the different years are "kbpYEAR", so we strip the year from the url, so we can redefine the year afterwards ourselves
+	website <- paste0(url,year)  # Binding the year to the website to form the URL
+	annual_table <- scrape_police_kill(website) # Applying the function from above
+	mastertable <- rbind(mastertable, annual_table) # Appending the scraped results from the given year to the master data set
+}
+
+class(mastertable) # The class of the object with all of the scraped data from the different years is 'matrix', which means that all of the data in the matrix is of the same class (which is character). We want to be able to have different classes for different columns of the data set, so we run the following code:
+mastertable = as_tibble(mastertable)
+```
+
+#### We'll now clean the data table a bit, so it's more informative and in the same data format.
+```{r cleaning and wrangling the tibble}
+mastertable = mastertable %>% 
+	mutate(Age = as.numeric(Age)) %>% # Making the 'Age' column numeric
+	rename(Method = "*") %>%  # Changing the name of the '*' column to the more descriptive 'Method'
+	mutate(Date = case_when( # Coercing all of the different data formats in the 'Date' column to be of the same type
+				grepl("201[34]", Date) ~ mdy(Date),
+				!grepl("201[34]",Date) ~ ymd(Date)),
+					Year = year(Date))
+```
+
+#### We save the data set for future use
+```{r saving the cleaned data into a file}
+write_csv(mastertable,"data/policekillings_cleaned.csv") # Saving the cleaned data, so we don't have to 
+# rerun the code from the above chunks every time we open our markdown file
+```
+
+
+
+#### Now we use the preferred method of extracting the information into an R object that doesn't require too much data wrangling
+```{r scrape-table}
+whole_table <- url_html %>% 
+ html_nodes("table") %>%
+ html_table()  
+
+class(whole_table) # We check the object we get out of running the code above
+```
+
+The object is a list, so we need to run the code below, so we can make it into a data frame in the end:
+```{r}
+new_table <- do.call(cbind,unlist(whole_table, recursive = FALSE)) 
+table_PK_2020 = as.data.frame(new_table)
+```
+
