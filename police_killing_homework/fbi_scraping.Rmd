@@ -1,0 +1,91 @@
+---
+title: "Assignment 7, task #1: Scraping from FBI - homicide trends across states from 2017 to 2019"
+author: "Otto Sejrskild Santesson"
+date: "7th of November 2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# Just a bunch of packages, that I keep on adding to every time I run into a package that I need to use (not good code practice, I know)
+pacman::p_load(utils,tidyverse, patchwork, ggplot2, lme4, stats, grid, ggpubr, ggrepel, graphics,effects,VCA, vroom, readbulk,stringi, gridExtra, MuMIn,dfoptim, reticulate, Rcpp,dplyr, pacman,lmerTest,boot, dagitty,rstan,rethinking, rvest, tidyr, stringr, janitor, statebins, httr,lubridate,ggridges, gifski, gganimate,av)
+```
+
+### Introduction
+I have chosen to work with task 1 of assignment 7, which is to __*adapt the web-scraping example to scrape homicide data from FBI site and produce a meaningful report on how homicide trends evolve around US in relation to this urban unrest*__
+
+There is a lot of ways to use the data provided on FBI's data to give insight into homicide trends in the US. The way I have chosen to go about answering the task is to look into the rate of violent crimes across the different states in the US across from the year 2017 to 2019 (sadly, these are the only (compatible) years provided on FBI's website). 
+
+Violent crimes denotes *offenses of murder, rape (revised definition), robbery, and aggravated assault* (see https://ucr.fbi.gov/crime-in-the-u.s/2019/crime-in-the-u.s.-2019/topic-pages/tables/table-4 for more information).
+
+Now, let's get on to some coding
+
+### Setting up the scrape function
+To begin with, we start by taking the code chunk provided in the 'scraping.Rmd' from the repository 'https://github.com/Digital-Methods-HASS/WebscrapingPoliceKillings' and then change it up it a bit, so it fits to our needs
+```{r scrape function}
+scrape_fbi <- function(website){
+	url <- read_html(website) # Putting the html data into an R object
+	annual_table <- url %>% 
+ 			html_nodes("table") %>% # Using this method, since it makes the data way easier to work with
+ 			html_table()  # Result is a list
+  annual_table <- do.call(cbind,unlist(annual_table, recursive = FALSE)) # Unlist the object and then recombines the individual elements as columns
+  annual_table <- as_tibble(annual_table) # Make it into a tibble, so it's nice to work with
+  annual_table <- annual_table[seq(3, nrow(annual_table), 3), ] # After a precheck of the data frame, we see that it is only every third row from row three that we're interested in (the other information is redundant, see https://ucr.fbi.gov/crime-in-the-u.s/2019/crime-in-the-u.s.-2019/topic-pages/tables/table-4 - we want the middle row for the given area)
+  rename(annual_table, "Violent crime per 100,000" = V5) # Renaming the column, so we know what it contains
+}
+```
+
+
+### Looping over the different years
+```{r loop}
+mastertable=NULL  # Creating an empty object for the results
+
+for (year in 2017:2019){  # Creating a loop that iterate over the different years
+	print(year) # Print the year, so we can follow along in the process
+	url1 <-"https://ucr.fbi.gov/crime-in-the-u.s/" # The url pattern demands us to break it into three bits like this
+	url2 <- "/crime-in-the-u.s.-"
+	url3 <- "/topic-pages/tables/table-4"
+	website <- paste0(url1,year,url2,year,url3)  # Binding the year to the website to form the URL
+	annual_table <- scrape_fbi(website) # Applying the function from above
+	mastertable <- rbind(mastertable, annual_table) # Appending the scraped results from the given year to the master data set
+}
+```
+
+### Preparing the data for visualization
+```{r tidying up the data frame}
+mastertable$`Violent crime per 100,000` = as.numeric(mastertable$`Violent crime per 100,000`) # Making the column of interest, the rate of violent crimes per 100,000 inhabitants of the given state, numeric
+
+all_states <-  c('Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan','Minnesota','Mississippi','Missouri','Montana','Nebraska','Nevada','New Hampshire','New Jersey','New Mexico','New York','North Carolina','North Dakota','Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island','South Carolina','South Dakota','Tennessee','Texas','Utah','Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming')
+# Making a vector of all the states of USA, that we will use to filter with (the unfiltered data set also includes areas that are not states)
+
+# Now we filter based on the 50 states in USA
+mastertable_states = mastertable %>% 
+	filter(Area %in% all_states)
+
+mastertable_states <- mastertable_states %>% 
+	rename(State = Area) %>%  # Renaming the column, so it is more representative
+	mutate(Year = as.numeric(Year),`Violent crime per 100,000` = as.numeric(`Violent crime per 100,000`))
+# And now we can go on to data visualization
+```
+
+### Visualization of the data
+```{r visualizing the data}
+skrrt_animate = ggplot(mastertable_states, aes(State, `Violent crime per 100,000`, fill = State))+ # We set up the base plot for the animation, make it so that the states are on the x-axis and rate of violent crime per 100,000 inhabitants are on the y-axis
+  geom_col() + # We want the data represented by columns
+  ylab("Violent crime per 100,000 inhabitants") + # Adding some more nice labels for the axes
+  xlab("State") +
+	theme(axis.text.x = element_text(angle = 90)) + # We turn the labels on the x-axis (the name of the states) 90 degress, so they don't overlap
+  theme(legend.position="none") # The legend is redundant, so we remove it (it just denotes the same stuff that the x-axis does)
+
+skrrt_animate + 
+	 labs(title = "Year: {next_state}") + # Adding a title that is in sync with the animation 
+		transition_states(Year, transition_length = 3, state_length = 1) + # Making the animation
+		enter_fade() +
+		exit_fade()
+```
+
+### Discussion
+By looking at the animated plot resulting from the code chunk above, we get a nice overview of the rate of violent crimes per 100,000 people across the 50 different states of the US from 2017 to 2019. We see, that Alaska, New Mexico and Tennessee are the top three different states with the highest rates of violent crimes. A seeming artifact of the plot, is that the column of Iowa disappears at year 2018 and is still missing at year 2019. This is due to that there is no data on Iowa from those years - we still chose to include Iowa, since it can still provide some valuable information, even though the data is not complete.
+It seems like there is a general tendency across states, that the rate of violent crime decreases from year 2017 to 2018, expect for the states of Alaska and New Mexico, where the rate in contrary increases.
+
