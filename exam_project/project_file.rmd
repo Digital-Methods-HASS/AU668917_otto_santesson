@@ -1,0 +1,26 @@
+---
+title: "Markdown for exam project for Inroduction to Cultural Data Science"
+author: "Otto Sejrskild Santesson"
+date: "12th of January, 2023" 
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    highlight: tango
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# Loading in packages needed for the project (some might be redundant, but it doesn't affect the 
+# R environment in this case)
+pacman::p_load(utils,tidyverse, patchwork, ggplot2, lme4, stats, grid, ggpubr, ggrepel, graphics,effects,VCA, vroom, readbulk,stringi, gridExtra, MuMIn,dfoptim, reticulate, Rcpp,dplyr, pacman,lmerTest,boot, dagitty,rstan,rethinking,truncnorm,jsonlite, devtools, coda, mvtnorm, devtools, loo, cmdstanr, ggdag)
+```
+
+```{r }
+
+
+
+```
+
