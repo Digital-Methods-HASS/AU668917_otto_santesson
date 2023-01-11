@@ -89,6 +89,9 @@ mapdata$region = ifelse(mapdata$region == "Virgin Islands" & grepl("US", mapdata
 # Filtering in the df, since we only need the metric of 'Percentage' for the data visualization:
 df_filtered = df %>% filter(metric == "Percent")
 
+# Changing the 'val' column (percentage of 10-24 year olds with mental disorder) from being represented in decimals to percentage 
+df_filtered$val = df_filtered$val*100
+
 # Filtering the df, so it only includes countries/regions that are in the 'mapdata' dataframe (thus filtering out all of the redundant regions, such as the individual states of USA)
 df_filtered = df_filtered[df_filtered$location %in% mapdata$region,]
 
@@ -124,8 +127,11 @@ filtered_joined_frame = rbind(filtered_joined_frame, joined_frame_kosovo)
 
 
 ```{r Filtering data frames for the visualization}
+
+# Preparing the data frame for Denmark is very simple - we simply just specify the region to be "Denmark"
 filtered_joined_frame_dk = filtered_joined_frame %>% filter(region == "Denmark")
 
+# To prepare the data frame for the visualization of the European countries, we first start of by defining a vector with the European countries
 european_countries = c("Albania", "Andorra", "Armenia", "Austria", "Azerbaijan",
   "Belarus", "Belgium", "Bosnia and Herzegovina", "Bulgaria", "Croatia",
   "Cyprus", "Czech Republic", "Denmark", "Estonia", "Finland", "France",
@@ -136,34 +142,32 @@ european_countries = c("Albania", "Andorra", "Armenia", "Austria", "Azerbaijan",
   "Slovakia", "Slovenia", "Spain", "Sweden", "Switzerland", "Turkey", "Ukraine",
   "UK", "Vatican City", "Russia")
 
+# We then filter the main data frame, by specifying that the region has to be in the vecotr of European countries specified above
 filtered_joined_frame_eu = filtered_joined_frame %>% filter(region %in% european_countries)
 
-
-
-
-
-
-
-filtered_joined_frame_eu %>% filter(region == "Kosovo")
-
-filtered_joined_frame %>% filter(grepl("donia",region))
-
-mapdata %>% filter(grepl("onia",region))
-
-df %>% filter(grepl("os",location))
-
-mapdata %>% filter(region == "Kosovo")
+# To prepare the data frame for the data vizualisation of all of the world countries, nothing has to be done - the data frame is simply 'filtered_joined_frame'
 ```
 
-```{r Plotting}
+```{r Plotting, Denmark}
 # Initializing 'gganimate' an R package that allows us to animate our ggplots, so we can see the development over time. We also need to initialize another package in order for it to run:
-pacman::p_load(gganimate,transformr)
+pacman::p_load(gganimate,transformr, gifski, png)
+
+animated_map_plot_dk = ggplot(filtered_joined_frame_dk) + # Initializing the basis of the ggplot
+  geom_polygon(aes(x = long, y = lat, group = group, fill = val), color = "black") + # Filling out the countries in respect to the percent of mental disorders
+  transition_time(year) +
+  scale_fill_gradient(name = "% mental disorder", low = "yellow", high =  "red", na.value = "grey50") + # Defining the gradient for the fill color
+  theme(axis.text.x = element_blank(), # Making the plot more need, by removing uninformative graphic settings
+        axis.text.y = element_blank(),
+        axis.title.y=element_blank(),
+        axis.title.x=element_blank())+
+  labs(title = "Proportion of 10-24 year olds, who have a mental disorder, Denmark") + # Setting up the title
+  labs(subtitle = "Year: {round(frame_time,0)}")
+
+animated_map_plot_dk
+```
 
 
-# Make six plots in total: Denmark, Europe, World, for both map and evolving balls
-
-# Things to add to the plot: if there is no Data for the region (i.e. NA), then the color of the region should be gray
-
+```{r Plotting, Europe}
 animated_map_plot_eu = ggplot(filtered_joined_frame_eu) + # Initializing the basis of the ggplot
   geom_polygon(aes(x = long, y = lat, group = group, fill = val), color = "black") + # Filling out the countries in respect to the percent of mental disorders
   transition_time(year) +
@@ -176,23 +180,68 @@ animated_map_plot_eu = ggplot(filtered_joined_frame_eu) + # Initializing the bas
   labs(title = "Proportion of 10-24 year olds, who have a mental disorder, Europe") + # Setting up the title
   labs(subtitle = "Year: {round(frame_time,0)}")
 
-
 animated_map_plot_eu
-animate(animated_map_plot_eu)
+```
 
-anim_play(animated_map_plot_eu)
-anim_save("checkker", animated_map_plot_eu)
 
-map_plot_eu_2017_2 = map_plot_eu_2017 + 
+```{r Plotting, World}
+animated_map_plot_world = ggplot(filtered_joined_frame) + # Initializing the basis of the ggplot
+  geom_polygon(aes(x = long, y = lat, group = group, fill = val), color = "black") + # Filling out the countries in respect to the percent of mental disorders
+  transition_time(year) +
+  scale_fill_gradient(name = "% mental disorder", low = "yellow", high =  "red", na.value = "grey50") + # Defining the gradient for the fill color
+  theme(axis.text.x = element_blank(), # Making the plot more need, by removing uninformative graphic settings
+        axis.text.y = element_blank(),
+        axis.title.y=element_blank(),
+        axis.title.x=element_blank())+
+  labs(title = "Proportion of 10-24 year olds, who have a mental disorder, World") + # Setting up the title
+  labs(subtitle = "Year: {round(frame_time,0)}")
 
-map_plot_eu_2017_2
+animated_map_plot_world
 
-ree = filtered_joined_frame_eu %>% filter(region == "Kosovo")
+animated_bar_plot_world = ggplot(filtered_joined_frame) + # Initializing the basis of the ggplot
+  geom_polygon(aes(x = long, y = lat, group = group, fill = val), color = "black") + # Filling out the countries in respect to the percent of mental disorders
+  transition_time(year) +
+  scale_fill_gradient(name = "% mental disorder", low = "yellow", high =  "red", na.value = "grey50") + # Defining the gradient for the fill color
+  theme(axis.text.x = element_blank(), # Making the plot more need, by removing uninformative graphic settings
+        axis.text.y = element_blank(),
+        axis.title.y=element_blank(),
+        axis.title.x=element_blank())+
+  labs(title = "Proportion of 10-24 year olds, who have a mental disorder, World") + # Setting up the title
+  labs(subtitle = "Year: {round(frame_time,0)}")
 
-range(ree$order)
+```
+
+
+```{r Plotting still graphs}
+ ggplot(filtered_joined_frame_dk, aes(year, val, color = val)) +
+  geom_line()+
+  scale_color_gradient(low = "#FF8308", high = "#C6080C") +
+  scale_x_continuous(breaks = seq(from = 1990, to = 2019, by = 1))+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  coord_cartesian(xlim = c(1991.28, 2017.72))+
+  guides(color = FALSE) +
+  xlab("Year") +
+  ylab("Percentage")+
+  ggtitle("Percentage of mental disorders among 10-24 year olds in Denmark, from 1990 to 2019")+
+  theme(plot.title = element_text(size = rel(1.12)))
+
+
+ ggplot(filtered_joined_frame_eu, aes(region, val, group = region, fill = region))+ 
+  geom_col() +
+	theme(axis.text.x = element_text(angle = 45)) +
+  guides(fill = FALSE)
+  
+skrrt_animate + 
+	 labs(title = "Year: {next_state}") + # Adding a title that is in sync with the animation 
+		transition_states(Year, transition_length = 3, state_length = 1) + # Making the animation
+		enter_fade() +
+		exit_fade()
+
+
 
 
 ```
+
 
 ```{r Plotting}
 # annotation_custom(grob = textGrob("My text label", rot = 90, hjust = 0),
