@@ -1,0 +1,197 @@
+
+```{r }
+# Making a list of all of the European countries (broadly defined as per https://en.wikipedia.org/wiki/List_of_European_countries_by_population (website accessed 7th of January, 2023))
+european_countries = c("Albania", "Andorra", "Armenia", "Austria", "Azerbaijan",
+  "Belarus", "Belgium", "Bosnia and Herzegovina", "Bulgaria", "Croatia",
+  "Cyprus", "Czech Republic", "Denmark", "Estonia", "Finland", "France",
+  "Georgia", "Germany", "Greece", "Hungary", "Iceland", "Ireland", "Italy",
+  "Kazakhstan", "Kosovo", "Latvia", "Liechtenstein", "Lithuania", "Luxembourg",
+  "Macedonia", "Malta", "Republic of Moldova", "Monaco", "Montenegro", "Netherlands",
+  "Norway", "Poland", "Portugal", "Romania", "Russia", "San Marino", "Serbia",
+  "Slovakia", "Slovenia", "Spain", "Sweden", "Switzerland", "Turkey", "Ukraine",
+  "United Kingdom", "Vatican City")
+
+# Making a list of all of the world countries (there might be a less verbose way to do it,
+# it is the most simple one)
+all_countries = c("Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda",
+  "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan", "Bahamas", "Bahrain",
+  "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bhutan", "Bolivia",
+  "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", "Burkina Faso",
+  "Burundi", "Cabo Verde", "Cambodia", "Cameroon", "Canada", "Central African Republic",
+  "Chad", "Chile", "China", "Colombia", "Comoros", "Congo (Brazzaville)", "Congo (Kinshasa)",
+  "Costa Rica", "Cote d'Ivoire", "Croatia", "Cuba", "Cyprus", "Czech Republic", "Denmark",
+  "Djibouti", "Dominica", "Dominican Republic", "Ecuador", "Egypt", "El Salvador",
+  "Equatorial Guinea", "Eritrea", "Estonia", "Ethiopia", "Fiji", "Finland", "France",
+  "Gabon", "Gambia", "Georgia", "Germany", "Ghana", "Greece", "Grenada", "Guatemala",
+  "Guinea", "Guinea-Bissau", "Guyana", "Haiti", "Honduras", "Hungary", "Iceland", "India",
+  "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy", "Jamaica", "Japan", "Jordan",
+  "Kazakhstan", "Kenya", "Kiribati", "Kuwait", "Kyrgyzstan", "Laos", "Latvia", "Lebanon",
+  "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg", "Madagascar",
+  "Malawi", "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania",
+  "Mauritius", "Mexico", "Micronesia", "Moldova", "Monaco", "Mongolia", "Montenegro",
+  "Morocco", "Mozambique", "Myanmar (Burma)", "Namibia", "Nauru", "Nepal", "Netherlands",
+  "New Zealand", "Nicaragua", "Niger", "Nigeria", "North Korea", "Norway", "Oman", "Pakistan",
+  "Palau", "Palestine", "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines",
+  "Poland", "Portugal", "Qatar", "Romania", "Russia", "Rwanda", "Saint Kitts and Nevis",
+  "Saint Lucia", "Saint Vincent and the Grenadines", "Samoa", "San Marino", "Sao Tome and Principe", "Saudi Arabia", "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "Solomon Islands", "Somalia", "South Africa",
+  "South Korea", "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname", "Swaziland", "Sweden",
+  "Switzerland", "Syria", "Taiwan", "Tajikistan", "Tanzania", "Thailand", "Timor-Leste", "Togo",
+  "Tonga", "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan", "Tuvalu", "Uganda", "Ukraine",
+  "United Arab Emirates", "United States", "Uruguay", "Uzbekistan", "Vanuatu",
+  "Venezuela", "Vietnam", "Wales", "Yemen", "Zambia", "Zimbabwe")
+
+european_union <- c("Austria","Belgium","Bulgaria","Croatia","Cyprus",
+                    "Czech Republic","Denmark","Estonia","Finland","France",
+                    "Germany","Greece","Hungary","Ireland","Italy","Latvia",
+                    "Lithuania","Luxembourg","Malta","Netherlands","Poland",
+                    "Portugal","Romania","Slovakia","Slovenia","Spain",
+                    "Sweden","UK","Switzerland", "Norway","Iceland")
+
+```
+
+
+
+## Other packages to consider for visualizing the data on a map
+
+```{r Plotting}
+# Soo, maybe I should not just use a plot of the world map, but like one of the bubble plots, which I've seen before
+
+
+# Starting off with initializing the required packages for plotting the data on maps:
+
+pacman::p_load(sf, rnaturalearth, rnaturalearthdata)
+
+european_union <- c("Austria","Belgium","Bulgaria","Croatia","Cyprus",
+                    "Czechia","Denmark","Estonia","Finland","France",
+                    "Germany","Greece","Hungary","Ireland","Italy","Latvia",
+                    "Lithuania","Luxembourg","Malta","Netherlands","Poland",
+                    "Portugal","Romania","Slovakia","Slovenia","Spain",
+                    "Sweden","United Kingdom")
+
+
+
+world_map = ne_countries(scale = 50, returnclass = 'sf')
+
+europe_map = world_map %>% 
+  filter(name %in% european_union)
+
+bbox_europe = st_bbox(c(xmin = -10, ymin = 20, xmax = 50, ymax = 80), crs = st_crs(europe_map))
+
+european_union_map_cropped <- st_crop(europe_map, bbox_europe)
+
+
+map = europe_map %>%
+  left_join(df, by = c("name" = "location"))
+
+ggplot(data = map) +
+  geom_sf(mapping = aes(fill = some_value)) +
+  scale_fill_gradient(name = "Growth Rate", low = "#FF0000FF", high = "#FFFF00FF", na.value = "grey50") +
+  labs(title = "(Fictitious) growth rate.") +
+  theme(plot.title.position = "plot")
+  
+```
+
+
+```{r ChatGPT - Using Leaflet to present the data}
+pacman::p_load(leaflet)
+
+# First, create a data frame with your data
+df <- tibble(Country = c("USA", "Canada", "Mexico"),
+                 Year = c(1990, 1990, 1990),
+                 Percentage = c(5, 10, 15))
+
+# Next, create a leaflet map object
+map <- leaflet() %>%
+  # Add a base map layer (you can choose from several different map styles)
+  addProviderTiles("OpenStreetMap.Mapnik")
+
+# Now, you can add a layer to the map that represents your data
+map <- map %>%
+  addPolygons(data = df,
+              fillColor = ~colorFactor(Percentage),
+              fillOpacity = 0.8,
+              color = "#BDBDC3",
+              weight = 1,
+              popup = paste("Country:", df$Country, "<br>",
+                            "Year:", df$Year, "<br>",
+                            "Percentage:", df$Percentage, "%"))
+
+# Finally, you can add a legend to the map to show the color gradient
+map <- map %>%
+  addLegend("bottomright", pal = colorFactor(df$Percentage), values = df$Percentage, title = "Percentage")
+
+# Display the map
+map
+
+```
+
+
+
+
+```{r Trying another method}
+# Countries transformations, to align the two different data frames, df (all data) and mapdata (for ggplotting)
+# United Kingdom -> UK
+# Republic of Korea -> South Korea
+# Democratic People's Republic of Korea -> North Korea
+# Czechia -> Czech Republic
+# Micronesia (Federated States of) -> Micronesia
+# United States of America -> USA
+# Republic of Moldova -> Moldova
+# "Viet Nam" -> "Vietnam"
+# Iran (Islamic Republic of) -> Iran
+# United Republic of Tanzania -> Tanzania
+# Venezuela (Bolivarian Republic of) -> Venezuela
+# Taiwan (Province of China) -> Taiwan
+# Russian Federation -> Russia
+# Brunei Darussalam -> Brunei
+# Lao People's Democratic Republic -> Laos
+# Bolivia (Plurinational State of) -> Bolivia
+# Reverse: Swaziland -> Eswatini
+# Reverse: "Trinidad" & "Tobago" -> "Trinidad and Tobago"
+# Reverse: "Antigua" & "Barbuda" -> "Antigua and Barbuda"
+# Reverse: "Saint Vincent" & "Grenadines" -> "Saint Vincent and the Grenadines"
+# Reverse: "Saint Kitts" & "Nevis" -> "Saint Kitts and Nevis"
+
+# Special Case, Reverse: Virgin Islands (subregion == US) -> United States Virgin Islands
+
+mapdata_countries <- mapdata %>% select(region) %>% unique() %>% as.list()
+
+# Some code, to check whether the countries of the two data frames have been aligned
+
+
+# This code check whether there are some of the countries in the mapdata data frame that are not in the df dataframe
+check = !mapdata$region %in% df$location
+check2 = mapdata[check,]
+unique(check2$region)
+
+# This does the same, but just reverse
+tjek = !df$location %in% mapdata$region
+tjek2 = df[tjek,]
+unique(tjek2$location)
+
+
+df %>% filter(location == "Republic of Côte d'Ivoire")
+
+df %>% filter(grepl("F*aro", location))
+
+mapdata %>% filter(subregion == "US  ")
+
+mapdata %>% filter(region == "Virgin Islands")
+
+mapdata %>% filter(region == "Virgin Islands", subregion == "US")
+
+mapdata %>% filter(subregion == "British")
+
+mapdata %>% filter(!is.na(subregion) & region == "Virgin Islands")
+
+
+# Leftovers, that should be in mapdata:
+# Tuvalu
+# Eswatini
+
+mapdata %>% filter(!is.na(subregion))
+
+
+unique(mapdata$subregion)
+
+```

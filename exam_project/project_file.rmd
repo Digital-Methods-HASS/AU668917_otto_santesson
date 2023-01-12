@@ -1,6 +1,6 @@
 ---
-title: "Markdown for exam project for Inroduction to Cultural Data Science"
-author: "Otto Sejrskild Santesson"
+title: "Markdown for exam project for Introduction to Cultural Data Science"
+author: "Otto Sejrskild Santesson, study ID: 202004347"
 date: "12th of January, 2023" 
 output: 
   html_document:
@@ -17,7 +17,7 @@ knitr::opts_chunk$set(echo = TRUE)
 # R environment in this case)
 pacman::p_load(utils,tidyverse, patchwork, ggplot2, lme4, stats, grid, ggpubr, ggrepel, graphics,effects,VCA, vroom, readbulk,stringi, gridExtra, MuMIn,dfoptim, reticulate, Rcpp,dplyr, pacman,lmerTest,boot, dagitty,rstan,rethinking,truncnorm,jsonlite, devtools, coda, mvtnorm, devtools, loo, cmdstanr, ggdag)
 ```
-
+### Source and rigin of the data employed
 The data has been fetched online from Global Health Data Exchange (GHDX), which on their website is described at "the world’s most comprehensive catalog of surveys, censuses, vital statistics, and other health-related data". GHDX is part of the Institute for Health Metrics and Evaluation (IHME), which is an independent global health research center at the University of Washington. 
 
 Concretely, the data is from the results of the 2019 Global Burden of Disease (GBD) study, and was accessed using the following link: https://vizhub.healthdata.org/gbd-results
@@ -43,19 +43,21 @@ df = read_csv("data/raw_GBD_data.csv")
 # Listing the column names, so the adequate meta data can be provided (what the different column names mean)
 colnames(df)
 ```
+### Variable/column information:
 - 'measure': Name of the measure chosen (multiple options were available when filtering the data, using the database provided above). All of the values for this column is 'Prevalence'.
 - 'location': Name of the country or territory
 - 'sex': Specifies the sex of the data point - it is 'Both' for all of the data points, meaning that the data doesn't specify the sex (it is both female and male)
 - 'age': Specifies the age grouping of the data point (all of the data points has the age group 10-24 years old)
 - 'cause': The number ID of the disease - all of the values of this column is 'Mental disorders'
-- 'metric': Specifies the specific metric used for the specific data point/row - 'Number' specifies the absolute number of cases of mental disorders in the specified age group of the given country/territory, 'Percent' specifies the percentage of the specific population (country and age) that has a mental disorder and 'Rate' specifies 
+- 'metric': Specifies the specific metric used for the specific data point/row - 'Number' specifies the absolute number of cases of mental disorders in the specified age group of the given country/territory, 'Percent' specifies the percentage of the specific population (country and age) that has a mental disorder and 'Rate' specifies the change from year to year
+- 'year': Specifies the year of the data
+- 'val': Specifies the mean of the estimate - since there is some uncertainty with the exact pervasiveness of mental disorders, the data includes three column representing the estimate, where the 'val' column specifies the mean estimate
+- 'upper: Specifies the upper bound of the uncertainty interval of the estimate, which is the 97.5 % percentile estimate
+- 'lower': Specifies the lower bound of the uncertainty interval of the estimate, which is the 2.5 % percentile estimate
 
-
-same as for 'measure_id' and 'location_id' - each 'age_id' corresponds to a specific 'age_name' (i.e. age grouping)
-- 'age_name': specifies the age grouping of the data point (all of the data points has the age group 10-24 years old)
-
-```{r Trying another method}
-# Reference: https://youtu.be/AgWgPSZ7Gp0
+### Data wrangling and preparement of data frames
+```{r Constructing the data frame for map plotting}
+# Loading in the map data frame object - essential for plotting data on maps
 mapdata = map_data("world")
 
 # The countries of the two data frames (df, containing the data of the prevalence of mental disorder, and mapdata, containing the geographical mappings of the country) are not fully aligned in the sense that the assigned names are different, e.g. "United States of America" in df and "USA" in mapdata. This will be rectified in an unsophisticated yet straightforward manner in the following lines of code:
@@ -102,7 +104,7 @@ joined_frame = left_join(mapdata, df_filtered, by = c("region" = "location"))
 filtered_joined_frame = joined_frame %>% filter(!is.na(joined_frame$val))
 ```
 
-```{r Fixing the data for 'Kosovo' and adding it to the filter_joined_frame}
+```{r Fixing the data for Kosovo and adding it to the filter_joined_frame}
 # So, if we plotted the data from filtered_joined_frame on a map, then there would be a blank spot where Kosovo is supposed to be, since the raw data doesn't include any data on Kosovo. This is preferably avoided, so we construct a data frame for Kosovo that is compatible with the other data:
 
 # Starting off by filtering, so we only get rows where the region is "Kosovo"
@@ -125,9 +127,7 @@ filtered_joined_frame = rbind(filtered_joined_frame, joined_frame_kosovo)
 ```
 
 
-
 ```{r Filtering data frames for the visualization}
-
 # Preparing the data frame for Denmark is very simple - we simply just specify the region to be "Denmark"
 filtered_joined_frame_dk = filtered_joined_frame %>% filter(region == "Denmark")
 
@@ -148,383 +148,199 @@ filtered_joined_frame_eu = filtered_joined_frame %>% filter(region %in% european
 # To prepare the data frame for the data vizualisation of all of the world countries, nothing has to be done - the data frame is simply 'filtered_joined_frame'
 ```
 
-```{r Plotting, Denmark}
+
+### Plotting
+```{r Plotting animate map plot, Denmark}
 # Initializing 'gganimate' an R package that allows us to animate our ggplots, so we can see the development over time. We also need to initialize another package in order for it to run:
 pacman::p_load(gganimate,transformr, gifski, png)
 
 animated_map_plot_dk = ggplot(filtered_joined_frame_dk) + # Initializing the basis of the ggplot
-  geom_polygon(aes(x = long, y = lat, group = group, fill = val), color = "black") + # Filling out the countries in respect to the percent of mental disorders
-  transition_time(year) +
+  geom_polygon(aes(x = long, y = lat, group = group, fill = val), color = "black") + # Filling out with respect to the percent of mental disorders
+  transition_time(year) + # Needed for the animation of the plot - telling it, that it should animate with respect to 'year'
   scale_fill_gradient(name = "% mental disorder", low = "yellow", high =  "red", na.value = "grey50") + # Defining the gradient for the fill color
-  theme(axis.text.x = element_blank(), # Making the plot more need, by removing uninformative graphic settings
+  theme(axis.text.x = element_blank(), # Making the plot more neat, by removing uninformative graphic settings
         axis.text.y = element_blank(),
         axis.title.y=element_blank(),
         axis.title.x=element_blank())+
   labs(title = "Proportion of 10-24 year olds, who have a mental disorder, Denmark") + # Setting up the title
-  labs(subtitle = "Year: {round(frame_time,0)}")
+  labs(subtitle = "Year: {round(frame_time,0)}") # Setting up a subtitle that is matched with what year it is 
 
+# Plotting the plot
 animated_map_plot_dk
 ```
 
 
-```{r Plotting, Europe}
-animated_map_plot_eu = ggplot(filtered_joined_frame_eu) + # Initializing the basis of the ggplot
+```{r Plotting animate bar plot, Denmark}
+# A different way to visualize the data in an animated fashion; using a barplot
+animated_bar_plot_dk = df_filtered %>% 
+  filter(location == "Denmark") %>% 
+  ggplot(., aes(location, val)) +
+  transition_time(year) +
+  geom_col(fill = "red", color = "white", width = 0.25) +
+  guides(fill = FALSE) +
+  scale_y_continuous(breaks = seq(from = 0, to = max(18), by = 1)) +
+  ylab("Percentage") +
+  theme(axis.title.x = element_blank()) +
+  labs(title = "Proportion of 10-24 year olds, who have a mental disorder, Denmark") +
+  labs(subtitle = "Year: {round(frame_time,0)}")
+
+animated_bar_plot_dk
+```
+
+
+```{r Plotting animate map plot, Europe}
+animated_map_plot_eu = ggplot(filtered_joined_frame_eu) +
   geom_polygon(aes(x = long, y = lat, group = group, fill = val), color = "black") + # Filling out the countries in respect to the percent of mental disorders
   transition_time(year) +
-  scale_fill_gradient(name = "% mental disorder", low = "yellow", high =  "red", na.value = "grey50") + # Defining the gradient for the fill color
+  scale_fill_gradient(name = "% mental disorder", low = "yellow", high =  "red", na.value = "grey50") + 
   coord_cartesian(xlim = c(-25, 45), ylim = c(32,72)) + # Cropping the map, so it looks neater
-  theme(axis.text.x = element_blank(), # Making the plot more need, by removing uninformative graphic settings
+  theme(axis.text.x = element_blank(),
         axis.text.y = element_blank(),
         axis.title.y=element_blank(),
         axis.title.x=element_blank())+
-  labs(title = "Proportion of 10-24 year olds, who have a mental disorder, Europe") + # Setting up the title
+  labs(title = "Proportion of 10-24 year olds, who have a mental disorder, Europe") + 
   labs(subtitle = "Year: {round(frame_time,0)}")
 
 animated_map_plot_eu
 ```
 
 
-```{r Plotting, World}
-animated_map_plot_world = ggplot(filtered_joined_frame) + # Initializing the basis of the ggplot
-  geom_polygon(aes(x = long, y = lat, group = group, fill = val), color = "black") + # Filling out the countries in respect to the percent of mental disorders
+```{r Plotting animate bar plot, Europe}
+animated_bar_plot_eu = df_filtered %>% 
+  filter(location %in% european_countries) %>% 
+  ggplot(., aes(location, val)) +
   transition_time(year) +
-  scale_fill_gradient(name = "% mental disorder", low = "yellow", high =  "red", na.value = "grey50") + # Defining the gradient for the fill color
-  theme(axis.text.x = element_blank(), # Making the plot more need, by removing uninformative graphic settings
+  geom_col(fill = "#001489", color = "white") +
+  guides(fill = FALSE) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  theme(axis.text.x = element_text(size = rel(0.90))) +
+  scale_y_continuous(breaks = seq(from = 0, to = 28, by = 1)) +
+  ylab("Percentage") +
+  theme(axis.title.x = element_blank()) +
+  labs(title = "Proportion of 10-24 year olds, who have a mental disorder, Europe") +
+  labs(subtitle = "Year: {round(frame_time,0)}")
+
+animated_bar_plot_eu
+```
+
+
+```{r Plotting animate map plot, Denmark, World}
+animated_map_plot_world = ggplot(filtered_joined_frame) + 
+  geom_polygon(aes(x = long, y = lat, group = group, fill = val), color = "black") +
+  transition_time(year) +
+  scale_fill_gradient(name = "% mental disorder", low = "yellow", high =  "red", na.value = "grey50") + 
+  theme(axis.text.x = element_blank(), 
         axis.text.y = element_blank(),
         axis.title.y=element_blank(),
         axis.title.x=element_blank())+
-  labs(title = "Proportion of 10-24 year olds, who have a mental disorder, World") + # Setting up the title
+  labs(title = "Proportion of 10-24 year olds, who have a mental disorder, World") +
   labs(subtitle = "Year: {round(frame_time,0)}")
 
 animated_map_plot_world
+```
 
-animated_bar_plot_world = ggplot(filtered_joined_frame) + # Initializing the basis of the ggplot
-  geom_polygon(aes(x = long, y = lat, group = group, fill = val), color = "black") + # Filling out the countries in respect to the percent of mental disorders
+
+```{r Plotting animate bar plot, World}
+# Since it is all of the worlds countries that have to fit on the x-axis, the plot is going to be very cluttered.
+animated_bar_plot_world = df_filtered %>% 
+  filter(location %in% joined_frame$region) %>% 
+  ggplot(., aes(location, val)) +
   transition_time(year) +
-  scale_fill_gradient(name = "% mental disorder", low = "yellow", high =  "red", na.value = "grey50") + # Defining the gradient for the fill color
-  theme(axis.text.x = element_blank(), # Making the plot more need, by removing uninformative graphic settings
+  geom_col(fill = "#242526", color = "white") +
+  guides(fill = FALSE) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  theme(axis.text.x = element_text(size = rel(0.5))) +
+  scale_y_continuous(breaks = seq(from = 0, to = 28, by = 1)) +
+  ylab("Percentage") +
+  theme(axis.title.x = element_blank()) +
+  labs(title = "Proportion of 10-24 year olds, who have a mental disorder, World") +
+  labs(subtitle = "Year: {round(frame_time,0)}")
+
+animated_bar_plot_world
+```
+
+
+```{r Plotting still plots}
+# Since it is not possible to show animated plots on a PDF, I will make some additional (still) plots to put into the assignment:
+
+# A plot showing the development of the percentage of 10-24 year olds with mental disorder in Denmark from 1990 to 2019
+ ggplot(filtered_joined_frame_dk, aes(year, val, color = val)) + # Mapping 'color' to 'val', so we can visualize the development with colors as well
+  geom_line()+ # Using the line geom to visualize the data
+  scale_color_gradient(low = "#FF8308", high = "#C6080C") + # Defining the gradient color
+  scale_x_continuous(breaks = seq(from = 1990, to = 2019, by = 1))+ # Making some more ticks on the x-axis, so the plot is more legible
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+ # Adjusting the angels of the labels on the x-axis
+  coord_cartesian(xlim = c(1991.28, 2017.72))+ # Hardcoding the limits of the x-axis, so it is exactly how we want it (otherwise, there would be some ugly spacing)
+  guides(color = FALSE) + # Removing the legend, since it is redundant
+  xlab("Year") + # Renaming the x- and y-axis
+  ylab("Percentage")+
+  ggtitle("Percentage of mental disorders among 10-24 year olds in Denmark, from 1990 to 2019")+ # Defining our plot title
+  theme(plot.title = element_text(size = rel(1.12))) # And finally adjusting the size of it - otherwise, the title wouldn't fit the plot
+
+
+# Making the map plots from before, but only with the 2019 data:
+# Denmark
+ggplot(filter(filtered_joined_frame_dk, year == 2019)) +
+  geom_polygon(aes(x = long, y = lat, group = group, fill = round(val,2)), color = "black") + 
+  scale_fill_gradient(name = "% mental disorder", limits = c(16,18), low = "yellow", high =  "red", na.value = "grey50") +
+  theme(axis.text.x = element_blank(), 
         axis.text.y = element_blank(),
         axis.title.y=element_blank(),
         axis.title.x=element_blank())+
-  labs(title = "Proportion of 10-24 year olds, who have a mental disorder, World") + # Setting up the title
-  labs(subtitle = "Year: {round(frame_time,0)}")
+  labs(title = "Proportion of 10-24 year olds, who have a mental disorder, Denmark") +
+  labs(subtitle = "Year: 2019")
 
-```
-
-
-```{r Plotting still graphs}
- ggplot(filtered_joined_frame_dk, aes(year, val, color = val)) +
-  geom_line()+
-  scale_color_gradient(low = "#FF8308", high = "#C6080C") +
-  scale_x_continuous(breaks = seq(from = 1990, to = 2019, by = 1))+
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
-  coord_cartesian(xlim = c(1991.28, 2017.72))+
-  guides(color = FALSE) +
-  xlab("Year") +
-  ylab("Percentage")+
-  ggtitle("Percentage of mental disorders among 10-24 year olds in Denmark, from 1990 to 2019")+
-  theme(plot.title = element_text(size = rel(1.12)))
-
-
- ggplot(filtered_joined_frame_eu, aes(region, val, group = region, fill = region))+ 
-  geom_col() +
-	theme(axis.text.x = element_text(angle = 45)) +
-  guides(fill = FALSE)
-  
-skrrt_animate + 
-	 labs(title = "Year: {next_state}") + # Adding a title that is in sync with the animation 
-		transition_states(Year, transition_length = 3, state_length = 1) + # Making the animation
-		enter_fade() +
-		exit_fade()
-
-
-
-
-```
-
-
-```{r Plotting}
-# annotation_custom(grob = textGrob("My text label", rot = 90, hjust = 0),
- #                   xmin = 1, xmax = 1.2, ymin = 0, ymax = 1)
-    
-  
-# Different attempts to put a text above the legend 
-  # theme(plot.title.position = "plot", plot.title.hjust = 0)
-  # geom_text(x = 100, y = 100, label = "My text label", hjust = 0)
-  # annotate("text", x = 10, y = 10, label = "My text label", hjust = 0, size = 12)
-  # geom_text()
-  
-map_plot_eu_2017 + 
-  annotate("text", x = xcoord, y = ycoord, label = "My text label", hjust = 0, size = 12)
-
-
-  theme(axis.text.x = element_blank(),
+# Europe
+ggplot(filter(filtered_joined_frame_eu, year == 2019)) +
+  geom_polygon(aes(x = long, y = lat, group = group, fill = round(val,2)), color = "black") + 
+  scale_fill_gradient(name = "% mental disorder", low = "yellow", high =  "red", na.value = "grey50") +
+  coord_cartesian(xlim = c(-25, 45), ylim = c(32,72)) +
+  theme(axis.text.x = element_blank(), 
         axis.text.y = element_blank(),
-        axis.ticks = element_blank(),
         axis.title.y=element_blank(),
-        axis.title.x=element_blank(),
-        rect = element_blank())
-  
+        axis.title.x=element_blank())+
+  labs(title = "Proportion of 10-24 year olds, who have a mental disorder, Europe") +
+  labs(subtitle = "Year: 2019")
 
-map_plot_eu_2017_2
-map2
-
-
-# Europe plot:
-
-
-
-filtered_joined_frame_2017 = filtered_joined_frame %>% filter(year == 2017)
-
-map_plot = ggplot(filtered_joined_frame_2017, aes(x = long, y = lat, group = group)) +
-  geom_polygon(aes(fill = val), color = "darkblue")
-map_plot
-
-# Meddling with the 'crs' argument can make the map look less distorted
-
-?geom_polygon
+# World
+ggplot(filter(filtered_joined_frame, year == 2019)) +
+  geom_polygon(aes(x = long, y = lat, group = group, fill = round(val,2)), color = "black") + 
+  scale_fill_gradient(name = "% mental disorder", low = "yellow", high =  "red", na.value = "grey50") +
+  theme(axis.text.x = element_blank(), 
+        axis.text.y = element_blank(),
+        axis.title.y=element_blank(),
+        axis.title.x=element_blank())+
+  labs(title = "Proportion of 10-24 year olds, who have a mental disorder, World") +
+  labs(subtitle = "Year: 2019")
 
 
-df_filtered_checking = df_filtered %>% filter(year == 2017) %>% arrange(val)
 
-eu_skrrty = map_data("europe")
+# Making the bar plots from before, but only with the 2019 data:
+# Europe
+df_filtered %>% 
+  filter(location %in% european_countries) %>% 
+  filter(year == 2019) %>% 
+ggplot(., aes(location, val)) +
+  geom_col(fill = "#001489") +
+  guides(fill = FALSE) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  theme(axis.text.x = element_text(size = rel(0.90))) +
+  ylab("Percentage") +
+  theme(axis.title.x = element_blank()) +
+    labs(title = "Proportion of 10-24 year olds, who have a mental disorder, Europe") +
+  labs(subtitle = "Year: 2019")
 
+# World
+# Be aware - since it is all of the countries of the world, the plot is going to be very cluttered. There is no way around it 
+df_filtered %>% 
+  filter(location %in% joined_frame$region) %>% 
+  filter(year == 2019) %>% 
+ggplot(., aes(location, val)) +
+  geom_col(fill = "#242526", color = "white") +
+  guides(fill = FALSE) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  theme(axis.text.x = element_text(size = rel(0.5))) +
+  ylab("Percentage") +
+  theme(axis.title.x = element_blank()) +
+    labs(title = "Proportion of 10-24 year olds, who have a mental disorder, World") +
+  labs(subtitle = "Year: 2019")
 ```
-
-
-
-
-
-```{r }
-# Making a list of all of the European countries (broadly defined as per https://en.wikipedia.org/wiki/List_of_European_countries_by_population (website accessed 7th of January, 2023))
-european_countries = c("Albania", "Andorra", "Armenia", "Austria", "Azerbaijan",
-  "Belarus", "Belgium", "Bosnia and Herzegovina", "Bulgaria", "Croatia",
-  "Cyprus", "Czech Republic", "Denmark", "Estonia", "Finland", "France",
-  "Georgia", "Germany", "Greece", "Hungary", "Iceland", "Ireland", "Italy",
-  "Kazakhstan", "Kosovo", "Latvia", "Liechtenstein", "Lithuania", "Luxembourg",
-  "Macedonia", "Malta", "Republic of Moldova", "Monaco", "Montenegro", "Netherlands",
-  "Norway", "Poland", "Portugal", "Romania", "Russia", "San Marino", "Serbia",
-  "Slovakia", "Slovenia", "Spain", "Sweden", "Switzerland", "Turkey", "Ukraine",
-  "United Kingdom", "Vatican City")
-
-# Making a list of all of the world countries (there might be a less verbose way to do it,
-# it is the most simple one)
-all_countries = c("Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda",
-  "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan", "Bahamas", "Bahrain",
-  "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bhutan", "Bolivia",
-  "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", "Burkina Faso",
-  "Burundi", "Cabo Verde", "Cambodia", "Cameroon", "Canada", "Central African Republic",
-  "Chad", "Chile", "China", "Colombia", "Comoros", "Congo (Brazzaville)", "Congo (Kinshasa)",
-  "Costa Rica", "Cote d'Ivoire", "Croatia", "Cuba", "Cyprus", "Czech Republic", "Denmark",
-  "Djibouti", "Dominica", "Dominican Republic", "Ecuador", "Egypt", "El Salvador",
-  "Equatorial Guinea", "Eritrea", "Estonia", "Ethiopia", "Fiji", "Finland", "France",
-  "Gabon", "Gambia", "Georgia", "Germany", "Ghana", "Greece", "Grenada", "Guatemala",
-  "Guinea", "Guinea-Bissau", "Guyana", "Haiti", "Honduras", "Hungary", "Iceland", "India",
-  "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy", "Jamaica", "Japan", "Jordan",
-  "Kazakhstan", "Kenya", "Kiribati", "Kuwait", "Kyrgyzstan", "Laos", "Latvia", "Lebanon",
-  "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg", "Madagascar",
-  "Malawi", "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania",
-  "Mauritius", "Mexico", "Micronesia", "Moldova", "Monaco", "Mongolia", "Montenegro",
-  "Morocco", "Mozambique", "Myanmar (Burma)", "Namibia", "Nauru", "Nepal", "Netherlands",
-  "New Zealand", "Nicaragua", "Niger", "Nigeria", "North Korea", "Norway", "Oman", "Pakistan",
-  "Palau", "Palestine", "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines",
-  "Poland", "Portugal", "Qatar", "Romania", "Russia", "Rwanda", "Saint Kitts and Nevis",
-  "Saint Lucia", "Saint Vincent and the Grenadines", "Samoa", "San Marino", "Sao Tome and Principe", "Saudi Arabia", "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "Solomon Islands", "Somalia", "South Africa",
-  "South Korea", "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname", "Swaziland", "Sweden",
-  "Switzerland", "Syria", "Taiwan", "Tajikistan", "Tanzania", "Thailand", "Timor-Leste", "Togo",
-  "Tonga", "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan", "Tuvalu", "Uganda", "Ukraine",
-  "United Arab Emirates", "United States", "Uruguay", "Uzbekistan", "Vanuatu",
-  "Venezuela", "Vietnam", "Wales", "Yemen", "Zambia", "Zimbabwe")
-
-european_union <- c("Austria","Belgium","Bulgaria","Croatia","Cyprus",
-                    "Czech Republic","Denmark","Estonia","Finland","France",
-                    "Germany","Greece","Hungary","Ireland","Italy","Latvia",
-                    "Lithuania","Luxembourg","Malta","Netherlands","Poland",
-                    "Portugal","Romania","Slovakia","Slovenia","Spain",
-                    "Sweden","UK","Switzerland", "Norway","Iceland")
-
-```
-
-
-## Other packages to consider for visualizing the data on a map
-
-```{r Plotting}
-# Soo, maybe I should not just use a plot of the world map, but like one of the bubble plots, which I've seen before
-
-
-# Starting off with initializing the required packages for plotting the data on maps:
-
-pacman::p_load(sf, rnaturalearth, rnaturalearthdata)
-
-european_union <- c("Austria","Belgium","Bulgaria","Croatia","Cyprus",
-                    "Czechia","Denmark","Estonia","Finland","France",
-                    "Germany","Greece","Hungary","Ireland","Italy","Latvia",
-                    "Lithuania","Luxembourg","Malta","Netherlands","Poland",
-                    "Portugal","Romania","Slovakia","Slovenia","Spain",
-                    "Sweden","United Kingdom")
-
-
-
-world_map = ne_countries(scale = 50, returnclass = 'sf')
-
-europe_map = world_map %>% 
-  filter(name %in% european_union)
-
-bbox_europe = st_bbox(c(xmin = -10, ymin = 20, xmax = 50, ymax = 80), crs = st_crs(europe_map))
-
-european_union_map_cropped <- st_crop(europe_map, bbox_europe)
-
-
-map = europe_map %>%
-  left_join(df, by = c("name" = "location"))
-
-ggplot(data = map) +
-  geom_sf(mapping = aes(fill = some_value)) +
-  scale_fill_gradient(name = "Growth Rate", low = "#FF0000FF", high = "#FFFF00FF", na.value = "grey50") +
-  labs(title = "(Fictitious) growth rate.") +
-  theme(plot.title.position = "plot")
-  
-```
-
-
-```{r ChatGPT - Using Leaflet to present the data}
-pacman::p_load(leaflet)
-
-# First, create a data frame with your data
-df <- tibble(Country = c("USA", "Canada", "Mexico"),
-                 Year = c(1990, 1990, 1990),
-                 Percentage = c(5, 10, 15))
-
-# Next, create a leaflet map object
-map <- leaflet() %>%
-  # Add a base map layer (you can choose from several different map styles)
-  addProviderTiles("OpenStreetMap.Mapnik")
-
-# Now, you can add a layer to the map that represents your data
-map <- map %>%
-  addPolygons(data = df,
-              fillColor = ~colorFactor(Percentage),
-              fillOpacity = 0.8,
-              color = "#BDBDC3",
-              weight = 1,
-              popup = paste("Country:", df$Country, "<br>",
-                            "Year:", df$Year, "<br>",
-                            "Percentage:", df$Percentage, "%"))
-
-# Finally, you can add a legend to the map to show the color gradient
-map <- map %>%
-  addLegend("bottomright", pal = colorFactor(df$Percentage), values = df$Percentage, title = "Percentage")
-
-# Display the map
-map
-
-```
-
-
-
-
-```{r Trying another method}
-# Countries transformations, to align the two different data frames, df (all data) and mapdata (for ggplotting)
-# United Kingdom -> UK
-# Republic of Korea -> South Korea
-# Democratic People's Republic of Korea -> North Korea
-# Czechia -> Czech Republic
-# Micronesia (Federated States of) -> Micronesia
-# United States of America -> USA
-# Republic of Moldova -> Moldova
-# "Viet Nam" -> "Vietnam"
-# Iran (Islamic Republic of) -> Iran
-# United Republic of Tanzania -> Tanzania
-# Venezuela (Bolivarian Republic of) -> Venezuela
-# Taiwan (Province of China) -> Taiwan
-# Russian Federation -> Russia
-# Brunei Darussalam -> Brunei
-# Lao People's Democratic Republic -> Laos
-# Bolivia (Plurinational State of) -> Bolivia
-# Reverse: Swaziland -> Eswatini
-# Reverse: "Trinidad" & "Tobago" -> "Trinidad and Tobago"
-# Reverse: "Antigua" & "Barbuda" -> "Antigua and Barbuda"
-# Reverse: "Saint Vincent" & "Grenadines" -> "Saint Vincent and the Grenadines"
-# Reverse: "Saint Kitts" & "Nevis" -> "Saint Kitts and Nevis"
-
-# Special Case, Reverse: Virgin Islands (subregion == US) -> United States Virgin Islands
-
-mapdata_countries <- mapdata %>% select(region) %>% unique() %>% as.list()
-
-# Some code, to check whether the countries of the two data frames have been aligned
-
-
-# This code check whether there are some of the countries in the mapdata data frame that are not in the df dataframe
-check = !mapdata$region %in% df$location
-check2 = mapdata[check,]
-unique(check2$region)
-
-# This does the same, but just reverse
-tjek = !df$location %in% mapdata$region
-tjek2 = df[tjek,]
-unique(tjek2$location)
-
-
-df %>% filter(location == "Republic of Côte d'Ivoire")
-
-df %>% filter(grepl("F*aro", location))
-
-mapdata %>% filter(subregion == "US  ")
-
-mapdata %>% filter(region == "Virgin Islands")
-
-mapdata %>% filter(region == "Virgin Islands", subregion == "US")
-
-mapdata %>% filter(subregion == "British")
-
-mapdata %>% filter(!is.na(subregion) & region == "Virgin Islands")
-
-
-# Leftovers, that should be in mapdata:
-# Tuvalu
-# Eswatini
-
-mapdata %>% filter(!is.na(subregion))
-
-
-unique(mapdata$subregion)
-
-```
-
-
-```{r Trying another method}
-mapdata %>% filter(region == "United States o")
-
-df %>% filter(location == )
-
-?grepl
-length(unique(mapdata$region))
-
-length(mapdata_countries)
-
-
-
-
-class(c(",","ewew","dsd"))
-
-
-not_in_vector <- !df$location %in% all_countries
-
-heyo = df[not_in_vector,]
-
-
-as.vector()
-
-class(unique_values)
-unique_values
-
-```
-
-
-
-
-
-
-## References:
-https://egallic.fr/en/european-map-using-r/ 
-- Building the European map
