@@ -157,7 +157,7 @@ pacman::p_load(gganimate,transformr, gifski, png)
 animated_map_plot_dk = ggplot(filtered_joined_frame_dk) + # Initializing the basis of the ggplot
   geom_polygon(aes(x = long, y = lat, group = group, fill = val), color = "black") + # Filling out with respect to the percent of mental disorders
   transition_time(year) + # Needed for the animation of the plot - telling it, that it should animate with respect to 'year'
-  scale_fill_gradient(name = "% mental disorder", low = "yellow", high =  "red", na.value = "grey50") + # Defining the gradient for the fill color
+  scale_fill_gradient(name = "% mental disorder", low = "#FFF04D", high =  "darkred", na.value = "grey50") + # Defining the gradient for the fill color
   theme(axis.text.x = element_blank(), # Making the plot more neat, by removing uninformative graphic settings
         axis.text.y = element_blank(),
         axis.title.y=element_blank(),
@@ -176,7 +176,7 @@ animated_bar_plot_dk = df_filtered %>%
   filter(location == "Denmark") %>% 
   ggplot(., aes(location, val)) +
   transition_time(year) +
-  geom_col(fill = "red", color = "white", width = 0.25) +
+  geom_col(fill = "darkred", color = "white", width = 0.25) +
   guides(fill = FALSE) +
   scale_y_continuous(breaks = seq(from = 0, to = max(18), by = 1)) +
   ylab("Percentage") +
@@ -192,7 +192,7 @@ animated_bar_plot_dk
 animated_map_plot_eu = ggplot(filtered_joined_frame_eu) +
   geom_polygon(aes(x = long, y = lat, group = group, fill = val), color = "black") + # Filling out the countries in respect to the percent of mental disorders
   transition_time(year) +
-  scale_fill_gradient(name = "% mental disorder", low = "yellow", high =  "red", na.value = "grey50") + 
+  scale_fill_gradient(name = "% mental disorder", low = "#FFF04D", high =  "darkred", na.value = "grey50") + 
   coord_cartesian(xlim = c(-25, 45), ylim = c(32,72)) + # Cropping the map, so it looks neater
   theme(axis.text.x = element_blank(),
         axis.text.y = element_blank(),
@@ -228,7 +228,7 @@ animated_bar_plot_eu
 animated_map_plot_world = ggplot(filtered_joined_frame) + 
   geom_polygon(aes(x = long, y = lat, group = group, fill = val), color = "black") +
   transition_time(year) +
-  scale_fill_gradient(name = "% mental disorder", low = "yellow", high =  "red", na.value = "grey50") + 
+  scale_fill_gradient(name = "% mental disorder", low = "#FFF04D", high =  "darkred", na.value = "grey50") + 
   theme(axis.text.x = element_blank(), 
         axis.text.y = element_blank(),
         axis.title.y=element_blank(),
@@ -274,14 +274,14 @@ animated_bar_plot_world
   xlab("Year") + # Renaming the x- and y-axis
   ylab("Percentage")+
   ggtitle("Percentage of mental disorders among 10-24 year olds in Denmark, from 1990 to 2019")+ # Defining our plot title
-  theme(plot.title = element_text(size = rel(1.12))) # And finally adjusting the size of it - otherwise, the title wouldn't fit the plot
+  theme(plot.title = element_text(size = rel(1.05))) # And finally adjusting the size of it - otherwise, the title wouldn't fit the plot
 
 
 # Making the map plots from before, but only with the 2019 data:
 # Denmark
 ggplot(filter(filtered_joined_frame_dk, year == 2019)) +
   geom_polygon(aes(x = long, y = lat, group = group, fill = round(val,2)), color = "black") + 
-  scale_fill_gradient(name = "% mental disorder", limits = c(16,18), low = "yellow", high =  "red", na.value = "grey50") +
+  scale_fill_gradient(name = "% mental disorder", limits = c(16,18), low = "#FFF04D", high =  "darkred", na.value = "grey50") +
   theme(axis.text.x = element_blank(), 
         axis.text.y = element_blank(),
         axis.title.y=element_blank(),
@@ -292,7 +292,7 @@ ggplot(filter(filtered_joined_frame_dk, year == 2019)) +
 # Europe
 ggplot(filter(filtered_joined_frame_eu, year == 2019)) +
   geom_polygon(aes(x = long, y = lat, group = group, fill = round(val,2)), color = "black") + 
-  scale_fill_gradient(name = "% mental disorder", low = "yellow", high =  "red", na.value = "grey50") +
+  scale_fill_gradient(name = "% mental disorder", low = "#FFF04D", high =  "darkred", na.value = "grey50") +
   coord_cartesian(xlim = c(-25, 45), ylim = c(32,72)) +
   theme(axis.text.x = element_blank(), 
         axis.text.y = element_blank(),
@@ -304,7 +304,7 @@ ggplot(filter(filtered_joined_frame_eu, year == 2019)) +
 # World
 ggplot(filter(filtered_joined_frame, year == 2019)) +
   geom_polygon(aes(x = long, y = lat, group = group, fill = round(val,2)), color = "black") + 
-  scale_fill_gradient(name = "% mental disorder", low = "yellow", high =  "red", na.value = "grey50") +
+  scale_fill_gradient(name = "% mental disorder", low = "#FFF04D", high =  "darkred", na.value = "grey50") +
   theme(axis.text.x = element_blank(), 
         axis.text.y = element_blank(),
         axis.title.y=element_blank(),
