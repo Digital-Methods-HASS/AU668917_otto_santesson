@@ -20,7 +20,7 @@ pacman::p_load(utils,tidyverse, patchwork, ggplot2, lme4, stats, grid, ggpubr, g
 ### Source and rigin of the data employed
 The data has been fetched online from Global Health Data Exchange (GHDX), which on their website is described at "the world’s most comprehensive catalog of surveys, censuses, vital statistics, and other health-related data". GHDX is part of the Institute for Health Metrics and Evaluation (IHME), which is an independent global health research center at the University of Washington. 
 
-Concretely, the data is from the results of the 2019 Global Burden of Disease (GBD) study, and was accessed using the following link: https://vizhub.healthdata.org/gbd-results
+Concretely, the data is from the results of the 2019 Global Burden of Disease (GBD) study, and was accessed using the following link: https://vizhub.healthdata.org/gbd-results. The data was acquired the on the 9th of January 2023.
 
 The search criterias applied are as follows:
 GBD Estimate: ‘Cause of death of injury’
